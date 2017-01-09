@@ -1,5 +1,5 @@
 {
-  "name": "webpack1",
+  "name": "webpack-defaults",
   "version": "1.0.0",
   "description": "",
   "main": "./src/webpack-default.js",
