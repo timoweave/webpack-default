@@ -1,23 +1,29 @@
 const path = require('path');
+const teselecta = require('teselecta');
 
 const html_modify = require('html-webpack-plugin');
 const webpack = require('webpack');
 const loader_option = webpack.LoaderOptionsPlugin;
 const uglify = webpack.optimize.UglifyJsPlugin;
 const no_error_out = webpack.NoErrorsPlugin;
-const hot_loading = webpack.HotModuleReplacementPlugin;
+const hot_replacing = webpack.HotModuleReplacementPlugin;
 const const_def = webpack.DefinePlugin;
 const named_module = webpack.NamedModulesPlugin;
 const common_chunking = webpack.optimize.CommonsChunkPlugin;
 
 const fullpath = (suffix) => (require('path').join(__dirname, suffix));
-const hotentry = (suffix) => (['babel-polyfill', fullpath(suffix) ]);
+const hotentry = (suffix) => ([
+    // 'webpack-dev-server/client?http://localhost:8080',
+    // 'babel/polyfill',
+    // 'webpack/hot/dev-server',    
+    fullpath(suffix)
+]);
 
 const config = {
     entry: {
-        vendor: [ 'react', 'react-dom', 'moment'],
+        vendor: [ 'react', 'react-dom', 'moment' ],
         about : hotentry('./test/about.js'),
-        app : hotentry('./test/app.js')
+        index : hotentry('./test/index.js')
     },
     output: {
         publicPath : '/',
@@ -28,7 +34,8 @@ const config = {
         rules : [
             {
                 test : /\.(js|jsx)$/,
-                use : [ "react-hot-loader/webpack", "babel-loader" ],
+                use : [ { loader : "react-hot-loader/webpack" },
+                        { loader : "babel-loader", options : { presets : ["env", "react"] } } ],
                 exclude: /node_modules/
             },
             {
@@ -50,6 +57,7 @@ const config = {
         ]
     },
     plugins : [
+        new hot_replacing(),
         new const_def({
             'process.env.NODE_ENV' : JSON.stringify('development') }),        
         new loader_option({
@@ -59,17 +67,17 @@ const config = {
         new no_error_out(),
         new uglify({
             sourceMap: true }),
-        new hot_loading(),        
+        
         new html_modify({
             template : fullpath('./test/about.template.html'),
             chunks : [ 'vendor', 'commons', 'about' ],
             filename : 'about.html'}),
         new html_modify({
             template : fullpath('./test/index.template.html'),
-            chunks : [ 'vendor', 'commons', 'app' ],            
+            chunks : [ 'vendor', 'commons', 'index' ],
             filename : 'index.html'}),
         new common_chunking({
-            chucks : ['vendor', 'app', 'about'],
+            chucks : ['vendor', 'index', 'about'],
             name : "commons", 
             filename: '[hash].commons.js'
         })
@@ -78,7 +86,9 @@ const config = {
     performance: { hints: false },
     devtool: 'cheap-module-eval-source-map',
     devServer: {
-        contentBase: fullpath("./"),
+        // contentBase: fullpath("./"),
+        noInfo: false,        
+        publicPath: '/',
         historyApiFallback: true,
         port: 8080,
         hot: true,
@@ -90,4 +100,5 @@ const config = {
     }
 };
 
+console.log(teselecta(config));
 module.exports = config;
